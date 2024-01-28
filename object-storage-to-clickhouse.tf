@@ -6,9 +6,9 @@
 # Specify the following settings:
 locals {
 
-  folder_id   = "b1gmm82dtdb31itflrvj" # Set your cloud folder ID, same as for provider.
-  bucket_name = "os-to-ch"             # Set a unique bucket name.
-  ch_password = ""                     # Set a password for the ClickHouse® admin user.
+  folder_id   = "" # Set your cloud folder ID, same as for provider.
+  bucket_name = "" # Set a unique bucket name.
+  ch_password = "" # Set a password for the ClickHouse® admin user.
 
   # Specify these settings ONLY AFTER the cluster is created. Then run the "terraform apply" command again.
   # You should set up a source endpoint for the Object Storage bucket using the GUI to obtain endpoint's ID.
@@ -17,12 +17,8 @@ locals {
 
   # The following settings are predefined. Change them only if necessary.
   network_name          = "mch-network"        # Name of the network
-  subnet_a_name         = "mch-subnet-a"       # Name of the subnet
-  subnet_b_name         = "mch-subnet-b"       # Name of the subnet
-  subnet_d_name         = "mch-subnet-d"       # Name of the subnet
+  subnet_name           = "mch-subnet-a"       # Name of the subnet
   zone_a_v4_cidr_blocks = "10.1.0.0/16"        # CIDR block for the subnet
-  zone_b_v4_cidr_blocks = "10.2.0.0/16"        # CIDR block for the subnet
-  zone_d_v4_cidr_blocks = "10.3.0.0/16"        # CIDR block for the subnet
   sa-name               = "storage-editor"     # Name of the service account
   security_group_name   = "mch-security-group" # Name of the security group
   mch_cluster_name      = "mch-cluster"        # Name of the ClickHouse® cluster
@@ -41,26 +37,10 @@ resource "yandex_vpc_network" "network" {
 
 resource "yandex_vpc_subnet" "subnet-a" {
   description    = "Subnet in the ru-central1-a availability zone"
-  name           = local.subnet_a_name
+  name           = local.subnet_name
   zone           = "ru-central1-a"
   network_id     = yandex_vpc_network.network.id
   v4_cidr_blocks = [local.zone_a_v4_cidr_blocks]
-}
-
-resource "yandex_vpc_subnet" "subnet-b" {
-  description    = "Subnet in the ru-central1-b availability zone"
-  name           = local.subnet_b_name
-  zone           = "ru-central1-b"
-  network_id     = yandex_vpc_network.network.id
-  v4_cidr_blocks = [local.zone_b_v4_cidr_blocks]
-}
-
-resource "yandex_vpc_subnet" "subnet-d" {
-  description    = "Subnet in the ru-central1-d availability zone"
-  name           = local.subnet_d_name
-  zone           = "ru-central1-d"
-  network_id     = yandex_vpc_network.network.id
-  v4_cidr_blocks = [local.zone_d_v4_cidr_blocks]
 }
 
 resource "yandex_vpc_security_group" "security_group" {
@@ -69,7 +49,14 @@ resource "yandex_vpc_security_group" "security_group" {
   network_id  = yandex_vpc_network.network.id
 
   ingress {
-    description    = "Allows connections to the Managed Service for ClickHouse® cluster from the internet"
+    description    = "Allow incoming traffic from the port 8443"
+    protocol       = "TCP"
+    port           = 8443
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description    = "Allow incoming traffic from the port 9440"
     protocol       = "TCP"
     port           = 9440
     v4_cidr_blocks = ["0.0.0.0/0"]
@@ -168,8 +155,8 @@ resource "yandex_mdb_clickhouse_cluster" "mch-cluster" {
 
   host {
     type             = "CLICKHOUSE"
-    zone             = "ru-central1-b"
-    subnet_id        = yandex_vpc_subnet.subnet-b.id
+    zone             = "ru-central1-a"
+    subnet_id        = yandex_vpc_subnet.subnet-a.id
     assign_public_ip = true # Required for connection from the internet
   }
 
@@ -181,14 +168,14 @@ resource "yandex_mdb_clickhouse_cluster" "mch-cluster" {
 
   host {
     type      = "ZOOKEEPER"
-    zone      = "ru-central1-b"
-    subnet_id = yandex_vpc_subnet.subnet-b.id
+    zone      = "ru-central1-a"
+    subnet_id = yandex_vpc_subnet.subnet-a.id
   }
 
   host {
     type      = "ZOOKEEPER"
-    zone      = "ru-central1-d"
-    subnet_id = yandex_vpc_subnet.subnet-d.id
+    zone      = "ru-central1-a"
+    subnet_id = yandex_vpc_subnet.subnet-a.id
   }
 
   database {
