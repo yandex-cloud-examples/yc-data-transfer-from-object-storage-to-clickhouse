@@ -1,0 +1,3 @@
+# Uploading data from Yandex Object Storage into Yandex Managed Service for ClickHouse® through Yandex Data Transfer
+
+With [Data Transfer](https://yandex.cloud/docs/data-transfer), you can transfer data from an [Object Storage](https://yandex.cloud/en/docs/storage) bucket to a [Managed Service for ClickHouse®](https://yandex.cloud/en/docs/managed-clickhouse) table. See [this tutorial](https://yandex.cloud/en/docs/data-transfer/tutorials/object-storage-to-clickhouse) to learn how to set up the solution with Terraform. This repository contains the configuration file you will need: [object-storage-to-clickhouse.tf](object-storage-to-clickhouse.tf).
