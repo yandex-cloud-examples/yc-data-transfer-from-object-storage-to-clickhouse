@@ -190,8 +190,8 @@ resource "yandex_mdb_clickhouse_database" "db" {
 
 resource "yandex_mdb_clickhouse_user" "user" {
   cluster_id = yandex_mdb_clickhouse_cluster.mch-cluster.id
-  name     = local.ch_username
-  password = local.ch_password
+  name       = local.ch_username
+  password   = local.ch_password
 
   permission {
     database_name = yandex_mdb_clickhouse_database.db.name
