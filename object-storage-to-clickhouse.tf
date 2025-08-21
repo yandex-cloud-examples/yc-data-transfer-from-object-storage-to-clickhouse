@@ -178,16 +178,23 @@ resource "yandex_mdb_clickhouse_cluster" "mch-cluster" {
     subnet_id = yandex_vpc_subnet.subnet-a.id
   }
 
-  database {
-    name = local.ch_db_name
+  lifecycle {
+    ignore_changes = [database, user,]
   }
+}
 
-  user {
-    name     = local.ch_username
-    password = local.ch_password
-    permission {
-      database_name = local.ch_db_name
-    }
+resource "yandex_mdb_clickhouse_database" "db" {
+  cluster_id = yandex_mdb_clickhouse_cluster.mch-cluster.id
+  name       = local.ch_db_name
+}
+
+resource "yandex_mdb_clickhouse_user" "user" {
+  cluster_id = yandex_mdb_clickhouse_cluster.mch-cluster.id
+  name       = local.ch_username
+  password   = local.ch_password
+
+  permission {
+    database_name = yandex_mdb_clickhouse_database.db.name
   }
 }
 
